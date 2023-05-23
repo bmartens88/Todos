@@ -1,6 +1,7 @@
 using TodoApi;
 using TodoApi.Authentication;
 using TodoApi.Authorization;
+using TodoApi.Extensions;
 using TodoApi.Todos;
 using TodoApi.Users;
 
@@ -27,6 +28,12 @@ builder.Services.AddCurrentUser();
 // Open API
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(o => o.InferSecuritySchemes());
+
+// Configure rate limiting
+builder.Services.AddRateLimiting();
+
+// Configure OpenTelemetry
+builder.AddOpenTelemetry();
 
 var app = builder.Build();
 

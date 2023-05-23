@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using TodoApi.Authorization;
+using TodoApi.Extensions;
 
 namespace TodoApi.Todos;
 
@@ -12,7 +13,11 @@ public static class TodoApi
 
         group.WithTags("Todos");
 
-        group.RequireAuthorization(pb => pb.RequireCurrentUser());
+        group.RequireAuthorization(pb => pb.RequireCurrentUser())
+            .AddOpenApiSecurityRequirement();
+        
+        // Rate limit all APIs
+        group.RequirePerUserRateLimiting();
 
         group.MapGet("/", async (TodoDbContext db, CurrentUser owner) =>
         {
