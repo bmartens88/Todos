@@ -1,36 +1,45 @@
-using Microsoft.AspNetCore.ResponseCompression;
+using Todo.Web.Server;
+using Todo.Web.Server.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Configure auth
+builder.AddAuthentication();
+builder.Services.AddAuthorizationBuilder();
 
-builder.Services.AddControllersWithViews();
+// Add razor pages to render WASM todo component
 builder.Services.AddRazorPages();
+
+// Add forwarder to make sending requests to the backend easier
+builder.Services.AddHttpForwarder();
+
+var todoUrl = builder.Configuration["TodoApiUrl"]
+              ?? throw new InvalidOperationException("Todo API URL is not configured");
+
+// Configure the HttpClient for the backend API
+builder.Services.AddHttpClient<AuthClient>(client => { client.BaseAddress = new Uri(todoUrl); });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure HTTP request pipeline
 if (app.Environment.IsDevelopment())
-{
     app.UseWebAssemblyDebugging();
-}
 else
-{
-    app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
-}
 
 app.UseHttpsRedirection();
-
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.MapRazorPages();
-app.MapControllers();
-app.MapFallbackToFile("index.html");
+app.MapFallbackToPage("/_Host");
+
+// Configure APIs
+app.MapAuth();
+app.MapTodos(todoUrl);
 
 app.Run();
